@@ -2,24 +2,26 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
-// Import routes
-
+//! Import routes
+import favoriteRoutes from "./routes/favoriteRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import reservationRoutes from "./routes/reservationRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js"; // Import order routes
+import orderRoutes from "./routes/orderRoutes.js";
+
+// Import order routes
 dotenv.config();
-
 const app = express();
-
 // Middlewares
 app.use(cors());
 app.use(express.json());
 // Routes
+// Add contact routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reservations", reservationRoutes); // Add reservation routes
 app.use("/api/orders", orderRoutes); // Add order routes
+app.use("/api/favorites", favoriteRoutes);
 // Sample Route
 app.get("/", (req, res) => {
   res.send("✅ API is running...");

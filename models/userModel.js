@@ -32,6 +32,34 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    favorites: [
+      {
+        name: String,
+        price: Number,
+        desc: String,
+        img: String,
+        category: String,
+      },
+    ],
+    orders: [
+      {
+        orderItems: [
+          {
+            name: String,
+            qty: Number,
+            price: Number,
+            productId: {
+              type: mongoose.Schema.Types.ObjectId,
+              required: true,
+              ref: "MenuItem", // assuming you’ll have a MenuItem model later
+            },
+          },
+        ],
+        totalAmount: Number,
+        paymentMethod: String,
+        status: String,
+      },
+    ],
     savedCards: [
       {
         name: String,

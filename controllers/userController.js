@@ -45,3 +45,29 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 });
+// POST /api/users/favorites
+export const addFavorite = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  const item = req.body;
+
+  const exists = user.favorites.find((fav) => fav.name === item.name);
+  if (exists) return res.status(400).json({ message: "Already in favorites" });
+
+  user.favorites.push(item);
+  await user.save();
+  res.status(200).json(user.favorites);
+});
+
+// DELETE /api/users/favorites/:name
+export const removeFavorite = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  user.favorites = user.favorites.filter((fav) => fav.name !== req.params.name);
+  await user.save();
+  res.status(200).json(user.favorites);
+});
+
+// GET /api/users/favorites
+export const getFavorites = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  res.status(200).json(user.favorites);
+});

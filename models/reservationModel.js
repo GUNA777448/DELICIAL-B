@@ -2,23 +2,17 @@ import mongoose from "mongoose";
 
 const reservationSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    restaurant: { type: String, required: true },
     name: { type: String, required: true },
+    email: { type: String, required: true },
     phone: { type: String, required: true },
-    guests: { type: Number, required: true },
     date: { type: String, required: true },
     time: { type: String, required: true },
-    specialRequest: { type: String },
+    guests: { type: Number, default: 2 },
+    requests: { type: String },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Reservation = mongoose.model("Reservation", reservationSchema);
-
 export default Reservation;
