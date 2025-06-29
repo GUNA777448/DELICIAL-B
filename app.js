@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
 //! Import routes
-import favoriteRoutes from "./routes/favoriteRoutes.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import reservationRoutes from "./routes/reservationRoutes.js";
@@ -21,7 +21,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reservations", reservationRoutes); // Add reservation routes
 app.use("/api/orders", orderRoutes); // Add order routes
-app.use("/api/favorites", favoriteRoutes);
+
 // Sample Route
 app.get("/", (req, res) => {
   res.send("✅ API is running...");
