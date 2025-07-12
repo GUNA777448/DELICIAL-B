@@ -40,7 +40,7 @@ const app = express();
 // CORS configuration for production
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.CLIENT_URL, 'https://delcial-f.vercel.app/'] 
+    ? ['https://delcial-f.vercel.app', process.env.CLIENT_URL].filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
   optionsSuccessStatus: 200
