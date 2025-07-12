@@ -1,5 +1,6 @@
 import Cart from "../models/cartModel.js";
 
+// Get cart
 export const getCart = async (req, res) => {
   try {
     console.log("🛒 Getting cart for user:", req.user._id);
@@ -12,6 +13,7 @@ export const getCart = async (req, res) => {
   }
 };
 
+// Add to cart
 export const addToCart = async (req, res) => {
   try {
     console.log("➕ Adding to cart for user:", req.user._id);
@@ -65,6 +67,7 @@ export const addToCart = async (req, res) => {
   }
 };
 
+// Remove from cart
 export const removeFromCart = async (req, res) => {
   try {
     console.log("➖ Removing from cart for user:", req.user._id);
@@ -90,6 +93,7 @@ export const removeFromCart = async (req, res) => {
   }
 };
 
+// Clear cart
 export const clearCart = async (req, res) => {
   try {
     console.log("🗑️ Clearing cart for user:", req.user._id);

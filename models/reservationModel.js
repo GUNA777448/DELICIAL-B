@@ -10,6 +10,7 @@ const reservationSchema = new mongoose.Schema(
     time: { type: String, required: true },
     guests: { type: Number, default: 2 },
     requests: { type: String },
+    tableNumber: { type: Number, required: true },
   },
   { timestamps: true }
 );

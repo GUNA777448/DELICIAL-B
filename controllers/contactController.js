@@ -1,32 +1,69 @@
-import Cart from "../models/cartModel.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Add or update cart
-export const updateCart = async (req, res) => {
-  const userId = req.user._id;
-  const { items } = req.body;
+// ✉️ Email transporter setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
+// 📧 Send Contact Message
+export const sendContactMessage = async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: userId });
+    const { name, email, subject, message } = req.body;
 
-    if (cart) {
-      cart.items = items;
-      await cart.save();
-    } else {
-      cart = await Cart.create({ user: userId, items });
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ 
+        success: false,
+        message: "All fields are required" 
+      });
     }
 
-    res.status(200).json(cart);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating cart", error });
-  }
-};
+    // 📩 Email to Admin
+    const adminMail = {
+      from: `"Contact Form 📧" <${process.env.EMAIL_USER}>`,
+      to: process.env.TO_EMAIL || process.env.EMAIL_USER,
+      subject: `📧 New Contact Message: ${subject}`,
+      html: `
+        <div style="font-family: Arial; padding: 20px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 10px;">
+          <h2 style="color: #d63636;">New Contact Message</h2>
+          <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <p><strong>From:</strong> ${name} (${email})</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Message:</strong></p>
+            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+          <p style="color: #6c757d; font-size: 12px;">
+            This message was sent from the Delicial contact form.
+          </p>
+        </div>
+      `
+    };
 
-// Get cart
-export const getCart = async (req, res) => {
-  try {
-    const cart = await Cart.findOne({ user: req.user._id });
-    res.status(200).json(cart || { items: [] });
+    // Send email
+    try {
+      await transporter.sendMail(adminMail);
+      console.log('✅ Contact message email sent successfully');
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError.message);
+      // Don't fail the contact submission if email fails
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Message sent successfully! We'll get back to you soon."
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching cart", error });
+    console.error('❌ Error sending contact message:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to send message. Please try again later."
+    });
   }
 };

@@ -99,11 +99,18 @@ export const placeOrder = async (req, res) => {
       `,
     };
 
-    // Send both emails in parallel
-    await Promise.all([
-      transporter.sendMail(userMail),
-      transporter.sendMail(adminMail),
-    ]);
+    // Send both emails in parallel (with error handling)
+    try {
+      await Promise.all([
+        transporter.sendMail(userMail),
+        transporter.sendMail(adminMail),
+      ]);
+      console.log('✅ Order confirmation emails sent successfully');
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError.message);
+      // Don't fail the order if email fails
+      // In production, you might want to queue emails for retry
+    }
 
     res.status(201).json({
       success: true,

@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import reservationRoutes from "./routes/reservationRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import { sendContactMessage } from "./controllers/contactController.js";
 
 // Import order routes
 dotenv.config();
@@ -24,9 +25,29 @@ if (!process.env.MONGO_URI) {
   console.log("⚠️  MONGO_URI not found, using default");
 }
 
+// Production environment checks
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.log("⚠️  Email credentials not configured for production");
+  }
+  if (!process.env.TO_EMAIL) {
+    console.log("⚠️  Admin email not configured for production");
+  }
+}
+
 const app = express();
+
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.CLIENT_URL, 'https://delicial.vercel.app'] 
+    : ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 // Routes
 // Add contact routes
@@ -35,6 +56,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/reservations", reservationRoutes); // Add reservation routes
 app.use("/api/orders", orderRoutes); // Add order routes
 app.use("/api/cart", cartRoutes); // Add cart routes
+app.post("/api/contact", sendContactMessage); // Add contact route
 
 // Sample Route
 app.get("/", (req, res) => {

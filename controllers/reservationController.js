@@ -21,6 +21,9 @@ export const createReservation = async (req, res) => {
       return res.status(400).json({ message: "Please provide all required fields" });
     }
 
+    // Generate a random table number (1-50)
+    const tableNumber = Math.floor(Math.random() * 50) + 1;
+    
     const reservation = await Reservation.create({
       restaurant,
       name,
@@ -29,7 +32,8 @@ export const createReservation = async (req, res) => {
       date,
       time,
       guests: guests || 2,
-      requests: requests || ""
+      requests: requests || "",
+      tableNumber: tableNumber
     });
 
     // 💌 Email to User
@@ -46,10 +50,12 @@ export const createReservation = async (req, res) => {
             <li><strong>Restaurant:</strong> ${restaurant}</li>
             <li><strong>Date:</strong> ${date}</li>
             <li><strong>Time:</strong> ${time}</li>
+            <li><strong>Table Number:</strong> <span style="color: #d63636; font-weight: bold;">Table ${tableNumber}</span></li>
             <li><strong>Number of Guests:</strong> ${guests || 2}</li>
             <li><strong>Contact:</strong> ${phone}</li>
           </ul>
           ${requests ? `<p><strong>Special Requests:</strong> ${requests}</p>` : ''}
+          <p style="margin-top: 20px;">Please arrive 5 minutes before your reservation time and mention your table number to our staff.</p>
           <p style="margin-top: 20px;">We look forward to serving you! 🍽️</p>
           <p style="text-align: center; font-weight: bold; color: #333;">Thanks for choosing <span style="color: #d63636;">Delicial</span>!</p>
         </div>
@@ -71,6 +77,7 @@ export const createReservation = async (req, res) => {
             <li><strong>Restaurant:</strong> ${restaurant}</li>
             <li><strong>Date:</strong> ${date}</li>
             <li><strong>Time:</strong> ${time}</li>
+            <li><strong>Table Number:</strong> <span style="color: #d63636; font-weight: bold;">Table ${tableNumber}</span></li>
             <li><strong>Guests:</strong> ${guests || 2}</li>
             ${requests ? `<li><strong>Requests:</strong> ${requests}</li>` : ''}
           </ul>
@@ -78,10 +85,17 @@ export const createReservation = async (req, res) => {
       `
     };
 
-    await Promise.all([
-      transporter.sendMail(userMail),
-      transporter.sendMail(adminMail),
-    ]);
+    // Send both emails in parallel (with error handling)
+    try {
+      await Promise.all([
+        transporter.sendMail(userMail),
+        transporter.sendMail(adminMail),
+      ]);
+      console.log('✅ Reservation confirmation emails sent successfully');
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError.message);
+      // Don't fail the reservation if email fails
+    }
 
     res.status(201).json({
       success: true,
