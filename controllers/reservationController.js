@@ -3,118 +3,107 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
-// 🛜 Email transporter setup
+// ✉️ Email transporter setup
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // delicial4578@gmail.com
-    pass: process.env.EMAIL_PASS, // App password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
+// 📌 Create Reservation (User)
 export const createReservation = async (req, res) => {
   try {
-    const {
-      restaurant,
-      name,
-      email,
-      phone,
-      date,
-      time,
-      people,
-      specialRequest,
-    } = req.body;
+    const { restaurant, name, email, phone, date, time, guests, requests } = req.body;
 
-    const reservation = new Reservation({
+    if (!restaurant || !name || !email || !phone || !date || !time) {
+      return res.status(400).json({ message: "Please provide all required fields" });
+    }
+
+    const reservation = await Reservation.create({
       restaurant,
       name,
       email,
       phone,
       date,
       time,
-      guests: people,
-      requests: specialRequest,
+      guests: guests || 2,
+      requests: requests || ""
     });
 
-    await reservation.save();
-    console.log("✅ Reservation saved:", reservation);
-
-    // 💌 Email content
+    // 💌 Email to User
     const userMail = {
-      from: `"Delicial 🍲" <${process.env.EMAIL_USER}>`,
-      to: reservation.email,
-      subject: "🍽️ Your Reservation at Delicial is Confirmed!",
+      from: `\"Delicial 🍱\" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "🍽️ Your Table Reservation is Confirmed!",
       html: `
-        <div style="font-family: Arial, sans-serif; background: #fffaf5; padding: 20px; border-radius: 12px; max-width: 600px; margin: auto; border: 1px solid #ffdbb5;">
-          <div style="text-align: center;">
-            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhFU1wrMmUqiDfqCLCwoIi87VSKnR7KxrTmWBaP8NU76VfoLgcrFpFmYzZmCi_0i1wKp1e3mIBwvtWvWBeAdLYAtNo-bNKI3NmK4x6Itky-noRWw8TYZm4NnezxEgTTuYw9hpoEZ25Bo9rnY2geS12YWFUH-V3MuAEKqoUo8n4VZGQydai5YT_Ei9kIW3E/s320/Sophisticated%20Restaurant%20Logo%20-%20Letter%20'D'.png" alt="Delicial Logo" style="height: 60px; margin-bottom: 10px;" />
-            <h2 style="color: #d63636;">Reservation Confirmed!</h2>
-          </div>
-
-          <p>Hey <strong>${reservation.name}</strong>,</p>
-          <p>Your reservation at <strong>${reservation.restaurant}</strong> is confirmed 🎉</p>
-
-          <table style="width: 100%; margin-top: 10px; margin-bottom: 20px; font-size: 15px;">
-            <tr><td><strong>Date:</strong></td><td>${reservation.date}</td></tr>
-            <tr><td><strong>Time:</strong></td><td>${reservation.time}</td></tr>
-            <tr><td><strong>Guests:</strong></td><td>${reservation.guests}</td></tr>
-            <tr><td><strong>Phone:</strong></td><td>${reservation.phone}</td></tr>
-            <tr><td><strong>Email:</strong></td><td>${reservation.email}</td></tr>
-            <tr><td><strong>Special Requests:</strong></td><td>${reservation.requests || "None"}</td></tr>
-            <tr><td><strong>Pre-reservation Fee:</strong></td><td>₹60 (will be adjusted in bill)</td></tr>
-          </table>
-
-          <p style="margin-bottom: 25px;">We’ll hold your table for 15 minutes after your selected time. Please try to be on time 😄</p>
-
-          <div style="text-align: center;">
-            <p style="font-weight: bold; color: #333;">Thank you for choosing <span style="color: #d63636;">Delicial</span> 💖</p>
-            <p style="font-size: 13px; color: #888;">For any queries, contact us at <a href="mailto:delicial4578@gmail.com">delicial4578@gmail.com</a></p>
-          </div>
+        <div style="font-family: Arial; padding: 20px; border: 1px solid #ffdcb2; background: #fffaf2; border-radius: 10px; max-width: 600px; margin: auto;">
+          <h2 style="color: #d63636; text-align: center;">Reservation Confirmation</h2>
+          <p>Hi <strong>${name}</strong>,</p>
+          <p>Your table reservation has been confirmed! Here are the details:</p>
+          <ul>
+            <li><strong>Restaurant:</strong> ${restaurant}</li>
+            <li><strong>Date:</strong> ${date}</li>
+            <li><strong>Time:</strong> ${time}</li>
+            <li><strong>Number of Guests:</strong> ${guests || 2}</li>
+            <li><strong>Contact:</strong> ${phone}</li>
+          </ul>
+          ${requests ? `<p><strong>Special Requests:</strong> ${requests}</p>` : ''}
+          <p style="margin-top: 20px;">We look forward to serving you! 🍽️</p>
+          <p style="text-align: center; font-weight: bold; color: #333;">Thanks for choosing <span style="color: #d63636;">Delicial</span>!</p>
         </div>
-      `,
+      `
     };
 
+    // 💌 Email to Admin
     const adminMail = {
-      from: `"Delicial Booking Bot 🤖" <${process.env.EMAIL_USER}>`,
+      from: `\"Delicial Bot 🤖\" <${process.env.EMAIL_USER}>`,
       to: process.env.TO_EMAIL,
-      subject: `📥 New Reservation by ${reservation.name}`,
+      subject: `🍽️ New Reservation from ${name}`,
       html: `
         <div style="font-family: Arial; padding: 20px; background-color: #fff3f3; border: 1px solid #f8caca; border-radius: 10px; max-width: 600px; margin: auto;">
-          <h2>🔔 New Reservation Alert</h2>
-          <ul style="line-height: 1.6;">
-            <li><strong>Name:</strong> ${reservation.name}</li>
-            <li><strong>Email:</strong> ${reservation.email}</li>
-            <li><strong>Phone:</strong> ${reservation.phone}</li>
-            <li><strong>Restaurant:</strong> ${reservation.restaurant}</li>
-            <li><strong>Date:</strong> ${reservation.date}</li>
-            <li><strong>Time:</strong> ${reservation.time}</li>
-            <li><strong>Guests:</strong> ${reservation.guests}</li>
-            <li><strong>Requests:</strong> ${reservation.requests || "None"}</li>
-            <li><strong>Prepaid:</strong> ₹60</li>
+          <h2>📅 New Reservation Details</h2>
+          <ul>
+            <li><strong>Name:</strong> ${name}</li>
+            <li><strong>Email:</strong> ${email}</li>
+            <li><strong>Phone:</strong> ${phone}</li>
+            <li><strong>Restaurant:</strong> ${restaurant}</li>
+            <li><strong>Date:</strong> ${date}</li>
+            <li><strong>Time:</strong> ${time}</li>
+            <li><strong>Guests:</strong> ${guests || 2}</li>
+            ${requests ? `<li><strong>Requests:</strong> ${requests}</li>` : ''}
           </ul>
-          <p style="margin-top: 10px;">📩 Auto-generated by Delicial system.</p>
         </div>
-      `,
+      `
     };
 
-    const [userSent, adminSent] = await Promise.all([
+    await Promise.all([
       transporter.sendMail(userMail),
       transporter.sendMail(adminMail),
     ]);
 
-    console.log("📤 Emails sent to user & admin");
     res.status(201).json({
-      message: "Reservation successfully created and emails sent!",
-      data: reservation,
+      success: true,
+      message: "Reservation created successfully & emails sent!",
+      reservation
     });
-  } catch (err) {
-    console.error("❌ Server Error (createReservation):", err.message);
+  } catch (error) {
+    console.error('❌ Error creating reservation:', error);
     res.status(500).json({
-      message: "Internal server error. Reservation could not be created.",
+      success: false,
+      message: "Failed to create reservation",
+      error: error.message
     });
   }
 };
 
-export const cancelReservation = (req, res) => {
-  res.send("Cancel reservation not implemented yet.");
+// 📌 Get User's Reservations (User)
+export const getUserReservations = async (req, res) => {
+  try {
+    const reservations = await Reservation.find({ email: req.user.email });
+    res.json(reservations);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch your reservations" });
+  }
 };

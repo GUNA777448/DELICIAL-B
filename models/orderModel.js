@@ -14,9 +14,8 @@ const orderSchema = new mongoose.Schema(
         qty: { type: Number, required: true },
         price: { type: Number, required: true },
         productId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type: String,
           required: true,
-          ref: "MenuItem", // assuming you’ll have a MenuItem model later
         },
       },
     ],
@@ -38,6 +37,14 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["Placed", "Preparing", "Ready", "Delivered", "Cancelled"],
       default: "Placed",
+    },
+    deliveryAddress: {
+      name: { type: String, required: true },
+      phone: { type: String, required: true },
+      email: { type: String, required: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      pincode: { type: String, required: true }
     },
     isDelivered: {
       type: Boolean,
