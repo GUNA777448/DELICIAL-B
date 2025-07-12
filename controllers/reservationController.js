@@ -87,10 +87,10 @@ export const createReservation = async (req, res) => {
 
     // Send both emails in parallel (with error handling)
     try {
-      await Promise.all([
-        transporter.sendMail(userMail),
-        transporter.sendMail(adminMail),
-      ]);
+    await Promise.all([
+      transporter.sendMail(userMail),
+      transporter.sendMail(adminMail),
+    ]);
       console.log('✅ Reservation confirmation emails sent successfully');
     } catch (emailError) {
       console.error('❌ Email sending failed:', emailError.message);

@@ -119,7 +119,7 @@ export const placeOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error placing order:", error);
-    res.status(500).json({
+    res.status(500).json({ 
       success: false,
       message: "Failed to place order",
       error: error.message,
@@ -130,8 +130,8 @@ export const placeOrder = async (req, res) => {
 // 📌 Get My Orders (User)
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id });
-    res.json(orders);
+  const orders = await Order.find({ user: req.user._id });
+  res.json(orders);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch orders" });
   }
@@ -140,8 +140,8 @@ export const getMyOrders = async (req, res) => {
 // 📌 Get All Orders (Admin only)
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("user", "name email");
-    res.json(orders);
+  const orders = await Order.find().populate("user", "name email");
+  res.json(orders);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch all orders" });
   }
@@ -150,18 +150,18 @@ export const getAllOrders = async (req, res) => {
 // 📌 Update Order Status (Admin only)
 export const updateOrderStatus = async (req, res) => {
   try {
-    const orderId = req.params.id;
-    const { status } = req.body;
+  const orderId = req.params.id;
+  const { status } = req.body;
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+  const order = await Order.findById(orderId);
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
 
-    order.status = status;
-    const updatedOrder = await order.save();
+  order.status = status;
+  const updatedOrder = await order.save();
 
-    res.json(updatedOrder);
+  res.json(updatedOrder);
   } catch (error) {
     res.status(500).json({ message: "Failed to update order status" });
   }
