@@ -7,22 +7,31 @@ import { generateToken } from "../utils/generateToken.js";
 // @route   POST /api/auth/signup
 // @access  Public
 export const registerUser = asyncHandler(async (req, res) => {
+  console.log("Register user request body:", req.body);
+  console.log("Register user headers:", req.headers);
+  
   const { name, email, password } = req.body;
 
+  console.log("Extracted data:", { name, email, password: password ? '[HIDDEN]' : 'undefined' });
+
   if (!name || !email || !password) {
+    console.log("Missing required fields:", { name: !!name, email: !!email, password: !!password });
     res.status(400);
     throw new Error("Missing required fields");
   }
 
   const userExists = await User.findOne({ email });
   if (userExists) {
+    console.log("User already exists:", email);
     res.status(400);
     throw new Error("User already exists");
   }
 
+  console.log("Creating new user...");
   const user = await User.create({ name, email, password });
 
   if (user) {
+    console.log("User created successfully:", user._id);
     res.status(201).json({
       _id: user._id,
       name: user.name,
@@ -30,6 +39,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       token: generateToken(user._id),
     });
   } else {
+    console.log("Failed to create user");
     res.status(400);
     throw new Error("Invalid user data");
   }

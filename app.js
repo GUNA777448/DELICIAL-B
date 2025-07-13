@@ -48,7 +48,18 @@ const corsOptions = {
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`, {
+    body: req.body,
+    headers: req.headers['content-type']
+  });
+  next();
+});
+
 // Routes
 // Add contact routes
 app.use("/api/auth", authRoutes);
@@ -61,6 +72,35 @@ app.post("/api/contact", sendContactMessage); // Add contact route
 // Sample Route
 app.get("/", (req, res) => {
   res.send("✅ API is running...");
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      message: 'Validation Error',
+      errors: Object.values(err.errors).map(e => e.message)
+    });
+  }
+  
+  if (err.name === 'MongoError' && err.code === 11000) {
+    return res.status(400).json({
+      message: 'Duplicate field value entered'
+    });
+  }
+  
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error'
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    message: `Route ${req.originalUrl} not found`
+  });
 });
 
 // MongoDB Connection
