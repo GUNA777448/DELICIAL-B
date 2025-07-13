@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema(
     },
     phone: String,
     gender: String,
+    birthday: {
+      type: Date,
+      default: null
+    },
     age: Number,
     profilePic: String,
     address: {
@@ -87,6 +91,29 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Calculate age from birthday
+userSchema.methods.calculateAge = function () {
+  if (!this.birthday) return null;
+  const today = new Date();
+  const birthDate = new Date(this.birthday);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
+// Pre-save middleware to calculate age when birthday is updated
+userSchema.pre("save", async function (next) {
+  if (this.isModified("birthday") && this.birthday) {
+    this.age = this.calculateAge();
+  }
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 

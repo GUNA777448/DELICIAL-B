@@ -20,7 +20,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   }
 
   // Validate input fields
-  const { name, phone, gender, age, profilePic, address } = req.body;
+  const { name, phone, gender, birthday, profilePic, address } = req.body;
 
   // Validate name
   if (name !== undefined) {
@@ -54,14 +54,39 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     user.gender = gender;
   }
 
-  // Validate age
-  if (age !== undefined) {
-    const ageNum = parseInt(age);
-    if (age && (isNaN(ageNum) || ageNum < 1 || ageNum > 120)) {
-      res.status(400);
-      throw new Error("Please enter a valid age between 1 and 120");
+  // Validate birthday
+  if (birthday !== undefined) {
+    if (birthday) {
+      const birthDate = new Date(birthday);
+      const today = new Date();
+      
+      // Check if it's a valid date
+      if (isNaN(birthDate.getTime())) {
+        res.status(400);
+        throw new Error("Please enter a valid birthday");
+      }
+      
+      // Check if birthday is not in the future
+      if (birthDate > today) {
+        res.status(400);
+        throw new Error("Birthday cannot be in the future");
+      }
+      
+      // Check if birthday is not too far in the past (reasonable age limit)
+      const maxAge = 120;
+      const minDate = new Date();
+      minDate.setFullYear(today.getFullYear() - maxAge);
+      if (birthDate < minDate) {
+        res.status(400);
+        throw new Error("Please enter a valid birthday (maximum age: 120 years)");
+      }
+      
+      user.birthday = birthDate;
+      // Age will be calculated automatically by the pre-save middleware
+    } else {
+      user.birthday = null;
+      user.age = null;
     }
-    user.age = ageNum || null;
   }
 
   // Validate profile picture URL
@@ -90,6 +115,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
       email: updatedUser.email,
       phone: updatedUser.phone,
       gender: updatedUser.gender,
+      birthday: updatedUser.birthday,
       age: updatedUser.age,
       profilePic: updatedUser.profilePic,
       address: updatedUser.address,
