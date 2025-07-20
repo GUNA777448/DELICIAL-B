@@ -10,10 +10,56 @@ export const registerUser = asyncHandler(async (req, res) => {
   console.log("Register user request body:", req.body);
   console.log("Register user headers:", req.headers);
   
-  const { name, email, password } = req.body;
+  const { name, email, password, firebaseToken, userData } = req.body;
 
-  console.log("Extracted data:", { name, email, password: password ? '[HIDDEN]' : 'undefined' });
+  console.log("Extracted data:", { name, email, password: password ? '[HIDDEN]' : 'undefined', firebaseToken: !!firebaseToken });
 
+  // Handle Firebase authentication
+  if (firebaseToken && userData) {
+    console.log("Processing Firebase authentication...");
+    
+    const { email: firebaseEmail, name: firebaseName, photoURL } = userData;
+    
+    if (!firebaseEmail) {
+      res.status(400);
+      throw new Error("Email is required for Firebase authentication");
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email: firebaseEmail });
+    
+    if (!user) {
+      // Create new user from Firebase data
+      console.log("Creating new user from Firebase:", firebaseEmail);
+      user = await User.create({
+        name: firebaseName || firebaseEmail.split('@')[0],
+        email: firebaseEmail,
+        password: `firebase_${Date.now()}`, // Dummy password for Firebase users
+        profilePic: photoURL
+      });
+    } else {
+      // Update existing user's profile picture if available
+      if (photoURL && !user.profilePic) {
+        user.profilePic = photoURL;
+        await user.save();
+      }
+    }
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+    
+    console.log("Firebase user authenticated:", user._id);
+    
+    return res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+      token: token,
+    });
+  }
+
+  // Handle regular signup
   if (!name || !email || !password) {
     console.log("Missing required fields:", { name: !!name, email: !!email, password: !!password });
     res.status(400);
