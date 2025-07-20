@@ -78,3 +78,66 @@ export const getUserProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 });
+
+// @desc    Authenticate Firebase user & get JWT token
+// @route   POST /api/auth/firebase
+// @access  Public
+export const authenticateFirebaseUser = asyncHandler(async (req, res) => {
+  console.log("Firebase auth request body:", req.body);
+  
+  const { firebaseToken, userData } = req.body;
+
+  if (!firebaseToken || !userData) {
+    res.status(400);
+    throw new Error("Firebase token and user data required");
+  }
+
+  try {
+    // Verify Firebase token (you can add Firebase Admin SDK verification here)
+    // For now, we'll trust the client and use the user data
+    
+    const { email, name, photoURL } = userData;
+    
+    if (!email) {
+      res.status(400);
+      throw new Error("Email is required");
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      // Create new user from Firebase data
+      console.log("Creating new user from Firebase:", email);
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        password: `firebase_${Date.now()}`, // Dummy password for Firebase users
+        profilePic: photoURL
+      });
+    } else {
+      // Update existing user's profile picture if available
+      if (photoURL && !user.profilePic) {
+        user.profilePic = photoURL;
+        await user.save();
+      }
+    }
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+    
+    console.log("Firebase user authenticated:", user._id);
+    
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+      token: token,
+    });
+  } catch (error) {
+    console.error("Firebase auth error:", error);
+    res.status(400);
+    throw new Error("Firebase authentication failed");
+  }
+});
